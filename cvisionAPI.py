@@ -6,6 +6,9 @@ import glob
 BASE_URL = "https://japaneast.api.cognitive.microsoft.com/customvision/v3.3/Training/"
 HOST = "japaneast.api.cognitive.microsoft.com"
 
+'''
+
+'''
 def makeProject(key, name):
     end_point = BASE_URL + "projects?name="+ name +"&classificationType=Multiclass"
     headers = {
@@ -66,6 +69,25 @@ def getTags(key, projectId):
         print(r.json())
     return tags
 
+def getProjects(key):
+    end_point = BASE_URL + "/projects"
+    headers = {
+        "Content-type" : "application/json",
+        "HOST" : HOST,
+        "Training-key" : key
+    }
+
+    r = requests.get(
+        end_point,
+        headers = headers
+    )
+    try:
+        projects = r.json()
+    except Exception as e:
+        projects = None
+        print(r.json())
+    return projects
+
 def uploadImageData(key, projectId, path, tagId):
     end_point = BASE_URL + "projects/"+ projectId +"/images?tagIds={" + tagId + "}"
     print(end_point)
@@ -98,6 +120,53 @@ def uploadImageData(key, projectId, path, tagId):
                 error = None
                 print(json.dumps(error,indent=2))
 
+def train(key, projectId):
+    end_point = BASE_URL + "projects/"+ projectId +"/train"
+    print(end_point)
+    headers = {
+        "HOST" : HOST,
+        "Training-key" : key
+    }
+
+    r = requests.post(
+        end_point,
+        headers = headers
+    )
+    try:
+        tags = r.json()
+    except Exception as e:
+        tags = None
+        print(r.json())
+    return tags
+
+def test(key, projectId, imageFile, iterationId):
+    end_point = BASE_URL + "projects/"+ projectId +"/quicktest/image?iterationId=" + iterationId
+    print(end_point)
+    headers = {
+        "Content-type" : "application/octet-stream",
+        "HOST" : HOST,
+        "Training-key" : key
+    }
+
+    image = open(imageFile, "rb")
+    reqbody = image.read()
+    image.close()
+
+    r = requests.post(
+        end_point,
+        data = reqbody,
+        headers = headers
+    )
+    try:
+        tags = r.json()
+    except Exception as e:
+        tags = None
+        print(r.json())
+    return tags
+
+## -------------------------------------------------
+# メインプログラム
+## -------------------------------------------------
 if __name__ == "__main__":
     f = open('key.txt', 'r')
     key = f.read()
@@ -107,7 +176,8 @@ if __name__ == "__main__":
     if args[1:2] :
         print(args[1])
 
-        # プロジェクト作成
+        # プロジェクトの作成 makeProject 
+        # params: PROJECT_NAME
         if args[1] == "makeProject" :
             if args[2:3] :
                 projectId = makeProject(key, args[2])
@@ -116,7 +186,8 @@ if __name__ == "__main__":
                 print ("Input prject name.")
             exit()
 
-        # タグの作成
+        # タグの作成 makeTag 
+        # params: PROJECT_ID, TAG_NAME
         if args[1] == "makeTag" :
             if args[2:4] :
                 tagId = makeTag(key, args[2], args[3])
@@ -125,7 +196,8 @@ if __name__ == "__main__":
                 print ("Input prject ID and tag name.")
             exit()
 
-        # タグの一覧
+        # タグの一覧 get Tags
+        # params: PROJECT_ID
         if args[1] == "getTags" :
             if args[2:3] :
                 tags = getTags(key, args[2])
@@ -134,10 +206,17 @@ if __name__ == "__main__":
                 print ("Input prject ID.")
             exit()
 
-        # 画像のアップロードとタグ付け
+        # プロジェクトの一覧 getProjects
+        # params: 
+        if args[1] == "getProjects" :
+            tags = getProjects(key)
+            print(json.dumps(tags,indent=2))
+            exit()
+
+        # 画像のアップロードとタグ付け uploadImages
+        # params: PROJECT_ID, PATH, TAG_IDs
         if args[1] == "uploadImages" :
             if args[2:5] :
-                #tags = getTags(key, args[2])
                 uploadImageData(key, args[2], args[3], args[4])
 
             else:
@@ -145,8 +224,24 @@ if __name__ == "__main__":
             exit()
 
         # 学習の実行
+        # params: PROJECT_ID
+        if args[1] == "train" :
+            if args[2:3] :
+                tags = train(key, args[2])
+                print(json.dumps(tags,indent=2))
+            else:
+                print ("Input prject ID.")
+            exit()
 
         # テスト
+        # params: PROJECT_ID, IMAGE_FILE_PATH, ITERATION_ID
+        if args[1] == "test" :
+            if args[2:5] :
+                tags = test(key, args[2], args[3], args[4])
+                print(json.dumps(tags,indent=2))
+            else:
+                print ("Input prject ID.")
+            exit()
 
         # 制御コマンド(第一引数)が不正
         else :
