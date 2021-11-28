@@ -10,7 +10,7 @@ HOST = "japaneast.api.cognitive.microsoft.com"
 
 '''
 def makeProject(key, name):
-    end_point = BASE_URL + "projects?name="+ name +"&classificationType=Multiclass"
+    end_point = BASE_URL + "projects?name="+ name +"&classificationType=Multilabel"
     headers = {
         "Content-type" : "application/json",
         "HOST" : HOST,
@@ -89,7 +89,17 @@ def getProjects(key):
     return projects
 
 def uploadImageData(key, projectId, path, tagId):
-    end_point = BASE_URL + "projects/"+ projectId +"/images?tagIds={" + tagId + "}"
+
+    tagIds = tagId.split(',')
+    print(tagIds)
+    tagIdString = ""
+    for s in tagIds:
+        if tagIdString == "" :
+            tagIdString = s
+        else:
+            tagIdString = tagIdString + "," + s
+
+    end_point = BASE_URL + "projects/"+ projectId +"/images?tagIds={" + tagIdString + "}"
     print(end_point)
     headers = {
         "Content-type" : "application/octet-stream",
